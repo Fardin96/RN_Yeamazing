@@ -7,7 +7,14 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "dbuild": "cd android && rm -rf build && cd ..",
+    "cache-reset": "npx react-native start --reset-cache",
+    "gclean": "cd android && ./gradlew clean",
+    "clean": "yarn gclean && yarn cache-reset",
+    "build-android-release": "npx react-native build-android --mode=release",
+    "apk-android-release": "cd android && ./gradlew clean && ./gradlew assembleRelease",
+    "apk-android-debug": "cd android && ./gradlew clean && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@react-native-firebase/app": "^22.1.0",
