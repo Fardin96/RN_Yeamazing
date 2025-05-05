@@ -1645,6 +1645,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@firebase/component@npm:0.6.13":
+  version: 0.6.13
+  resolution: "@firebase/component@npm:0.6.13"
+  dependencies:
+    "@firebase/util": 1.11.0
+    tslib: ^2.1.0
+  checksum: 4971d894a84a422d4cfd23cc12916047110fe94e87f1d05dbe58eea7999b01924d828040371a50f945795ff3eb1dc1853b1682b71d54faff679b1e106473bb49
+  languageName: node
+  linkType: hard
+
 "@firebase/data-connect@npm:0.3.0":
   version: 0.3.0
   resolution: "@firebase/data-connect@npm:0.3.0"
@@ -1738,6 +1748,23 @@ __metadata:
   peerDependencies:
     "@firebase/app": 0.x
   checksum: d7f5f0147feba8e3fa9c808095766dd0e45f2f4cdb07f9f16efd3e8ecbf8e12e38eaa9f9887d0289eaaf7b12097cef6cf5dcc76c236763c1a7cc739d9951a062
+  languageName: node
+  linkType: hard
+
+"@firebase/firestore@npm:^4.7.11":
+  version: 4.7.11
+  resolution: "@firebase/firestore@npm:4.7.11"
+  dependencies:
+    "@firebase/component": 0.6.13
+    "@firebase/logger": 0.4.4
+    "@firebase/util": 1.11.0
+    "@firebase/webchannel-wrapper": 1.0.3
+    "@grpc/grpc-js": ~1.9.0
+    "@grpc/proto-loader": ^0.7.8
+    tslib: ^2.1.0
+  peerDependencies:
+    "@firebase/app": 0.x
+  checksum: 012300fbf44406945fdac983953ba3e0e823971b54beb90ce5a7e921bcb0f56b679483c289c33118515498ddf9878a9cea5c1366689dd5a47bc50292620f0b61
   languageName: node
   linkType: hard
 
@@ -1984,6 +2011,15 @@ __metadata:
   dependencies:
     tslib: ^2.1.0
   checksum: 4bd4201f0d4b87016a95ce3eb9fdcbc6eda20111f3598a13e1a96d4c4a72fa5a8e9af2bf4453a10e444a226a8f0424b9f55c4c6e8d9d344606bfedb01b143044
+  languageName: node
+  linkType: hard
+
+"@firebase/util@npm:1.11.0":
+  version: 1.11.0
+  resolution: "@firebase/util@npm:1.11.0"
+  dependencies:
+    tslib: ^2.1.0
+  checksum: f1ab43f86aae892715f2cce5c2c95ce1241e91ee70a12a53e2eb4a7b579d4ecee6f647ca459bb24af4eee334a922d662fa3fba23cc7b63e884b9a3c601964025
   languageName: node
   linkType: hard
 
@@ -3545,6 +3581,7 @@ __metadata:
     "@babel/core": ^7.25.2
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
+    "@firebase/firestore": ^4.7.11
     "@react-native-community/cli": 18.0.0
     "@react-native-community/cli-platform-android": 18.0.0
     "@react-native-community/cli-platform-ios": 18.0.0

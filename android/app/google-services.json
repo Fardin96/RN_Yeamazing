@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1041095261200",
+    "project_id": "rn-yeamazing",
+    "storage_bucket": "rn-yeamazing.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1041095261200:android:1484e39d2241746fe05e95",
+        "android_client_info": {
+          "package_name": "com.rn_yeamazing"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1041095261200-opl5nvh2348h2jr7qdt49ignlj493st7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNS6UFkMEVuuV3C4soOPadAZf_TRZP7gM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1041095261200-opl5nvh2348h2jr7qdt49ignlj493st7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
