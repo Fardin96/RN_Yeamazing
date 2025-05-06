@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1041095261200-oieoc72695d5ar9rrgh2t2j2e5o6aaig.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rn_yeamazing",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "1041095261200-opl5nvh2348h2jr7qdt49ignlj493st7.apps.googleusercontent.com",
           "client_type": 3
         }

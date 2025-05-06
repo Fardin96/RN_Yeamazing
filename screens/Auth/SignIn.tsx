@@ -20,6 +20,7 @@ import {SignInNavigationProp} from '../../types/navigation';
 import {useNavigation} from '@react-navigation/native';
 import {setLocalData} from '../../utils/functions/cachingFunctions';
 import {addUser} from '../../utils/functions/firestoreFunctions';
+import {FIREBASE_WEB_CLIENT_ID} from '@env';
 
 async function storeUserData(signInResult: SignInResult): Promise<void> {
   await setLocalData(AUTH_TOKEN, signInResult.data.idToken || '');
@@ -45,15 +46,17 @@ async function onGoogleButtonPress(
     // Check if Google Play Services are available
     await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
 
-    // Attempt to sign in
     const signInResult = await GoogleSignin.signIn();
 
-    // Check if response was cancelled
+    console.log(
+      '+--------------------------SIGN IN RESULT--------------------------',
+    );
+    console.log(signInResult);
+
     if (signInResult.type === 'cancelled') {
       throw new Error('Sign in was cancelled');
     }
 
-    // Ensure we have the required token
     if (!signInResult?.data?.idToken) {
       throw new Error('No ID token found');
     }
@@ -63,7 +66,7 @@ async function onGoogleButtonPress(
     }
 
     await storeUserData(signInResult);
-    navigation.replace('Home');
+    navigation.navigate('Home');
   } catch (error: unknown) {
     // Narrow down the error type
     if (error instanceof Error) {
@@ -76,11 +79,9 @@ async function onGoogleButtonPress(
         );
       }
     } else {
-      // Handle unexpected error types
       console.error('An unexpected error occurred:', error);
     }
 
-    // Optionally re-throw the error if necessary
     throw error;
   }
 }
@@ -89,10 +90,7 @@ function SignIn(): React.JSX.Element {
   const navigation = useNavigation<SignInNavigationProp>();
 
   useEffect(() => {
-    // Use the web client ID from .env file
-    const webClientId =
-      process.env.GOOGLE_WEB_CLIENT_ID ||
-      '479350528160-tveavo7l61j2gmgigtogi7m75msi3ukl.apps.googleusercontent.com';
+    const webClientId = FIREBASE_WEB_CLIENT_ID || '';
 
     GoogleSignin.configure({
       webClientId,
