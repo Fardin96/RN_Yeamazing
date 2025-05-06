@@ -12,6 +12,7 @@
     "cache-reset": "npx react-native start --reset-cache",
     "gclean": "cd android && ./gradlew clean",
     "clean": "yarn gclean && yarn cache-reset",
+    "signingReport": "cd android && ./gradlew signingReport",
     "build-android-release": "npx react-native build-android --mode=release",
     "apk-android-release": "cd android && ./gradlew clean && ./gradlew assembleRelease",
     "apk-android-debug": "cd android && ./gradlew clean && ./gradlew assembleDebug"
