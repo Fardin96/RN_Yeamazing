@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,14 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  PermissionsAndroid,
-  Linking,
+  //   PermissionsAndroid,
 } from 'react-native';
 import {colors} from '../../assets/colors/colors';
 import {useNavigation} from '@react-navigation/native';
 import {AddTravelLogNavigationProp} from '../../types/navigation';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+} from '@react-native-community/datetimepicker';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import {addTravelLog} from '../../utils/functions/travelLogFunctions';
@@ -30,51 +31,61 @@ export const AddTravelLog = (): React.JSX.Element => {
     dateTime: new Date(),
     details: '',
   });
-  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+
+  const [showIOSPicker, setShowIOSPicker] = useState<{
+    show: boolean;
+    mode: 'date' | 'time';
+  }>({
+    show: false,
+    mode: 'date',
+  });
+
+  const currentPickerMode = useRef<'date' | 'time'>('date');
+
   const [loading, setLoading] = useState<boolean>(false);
 
-  const requestGalleryPermission = async (): Promise<boolean> => {
-    console.log('+-----------------------PERMISSIONS---------------------+');
-    if (Platform.OS === 'android') {
-      const permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
-      const hasPermission = await PermissionsAndroid.check(permission);
-      console.log('permission', permission);
-      console.log('hasPermission', hasPermission);
-      if (!hasPermission) {
-        const status = await PermissionsAndroid.request(permission);
-        console.log('status', status);
-        return status === 'granted';
-      }
-      return true;
-    }
-    return true;
-  };
+  //   const requestGalleryPermission = async (): Promise<boolean> => {
+  //     console.log('+-----------------------PERMISSIONS---------------------+');
+  //     if (Platform.OS === 'android') {
+  //       const permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+  //       const hasPermission = await PermissionsAndroid.check(permission);
+  //       console.log('permission', permission);
+  //       console.log('hasPermission', hasPermission);
+  //       if (!hasPermission) {
+  //         const status = await PermissionsAndroid.request(permission);
+  //         console.log('status', status);
+  //         return status === 'granted';
+  //       }
+  //       return true;
+  //     }
+  //     return true;
+  //   };
 
-  const requestCameraPermission = async (): Promise<boolean> => {
-    if (Platform.OS === 'android') {
-      const cameraPermission = PermissionsAndroid.PERMISSIONS.CAMERA;
-      const storagePermission =
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
+  //   const requestCameraPermission = async (): Promise<boolean> => {
+  //     if (Platform.OS === 'android') {
+  //       const cameraPermission = PermissionsAndroid.PERMISSIONS.CAMERA;
+  //       const storagePermission =
+  //         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
 
-      const hasCameraPermission = await PermissionsAndroid.check(
-        cameraPermission,
-      );
-      const hasStoragePermission = await PermissionsAndroid.check(
-        storagePermission,
-      );
+  //       const hasCameraPermission = await PermissionsAndroid.check(
+  //         cameraPermission,
+  //       );
+  //       const hasStoragePermission = await PermissionsAndroid.check(
+  //         storagePermission,
+  //       );
 
-      if (!hasCameraPermission || !hasStoragePermission) {
-        const cameraStatus = await PermissionsAndroid.request(cameraPermission);
-        const storageStatus = await PermissionsAndroid.request(
-          storagePermission,
-        );
+  //       if (!hasCameraPermission || !hasStoragePermission) {
+  //         const cameraStatus = await PermissionsAndroid.request(cameraPermission);
+  //         const storageStatus = await PermissionsAndroid.request(
+  //           storagePermission,
+  //         );
 
-        return cameraStatus === 'granted' && storageStatus === 'granted';
-      }
-      return true;
-    }
-    return true; // iOS handles permissions
-  };
+  //         return cameraStatus === 'granted' && storageStatus === 'granted';
+  //       }
+  //       return true;
+  //     }
+  //     return true; // iOS handles permissions
+  //   };
 
   const selectImage = async (): Promise<void> => {
     // const hasPermission = await requestGalleryPermission();
@@ -144,10 +155,84 @@ export const AddTravelLog = (): React.JSX.Element => {
   };
 
   const handleDateChange = (event: any, selectedDate?: Date): void => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      setFormData({...formData, dateTime: selectedDate});
+    // Handle dismissal for iOS
+    if (event.type === 'dismissed') {
+      setShowIOSPicker({...showIOSPicker, show: false});
+      return;
     }
+
+    // Only proceed if we have a new date
+    if (!selectedDate) {
+      return;
+    }
+
+    // Create a new date object based on the current value
+    const newDateTime = new Date(formData.dateTime.getTime());
+
+    // Use the appropriate mode based on platform
+    const isDateMode =
+      Platform.OS === 'ios'
+        ? showIOSPicker.mode === 'date'
+        : currentPickerMode.current === 'date';
+
+    if (isDateMode) {
+      // Update date portion only
+      newDateTime.setFullYear(selectedDate.getFullYear());
+      newDateTime.setMonth(selectedDate.getMonth());
+      newDateTime.setDate(selectedDate.getDate());
+    } else {
+      // Update time portion only
+      newDateTime.setHours(selectedDate.getHours());
+      newDateTime.setMinutes(selectedDate.getMinutes());
+      newDateTime.setSeconds(selectedDate.getSeconds());
+    }
+
+    // Update form data with the new date
+    setFormData({...formData, dateTime: newDateTime});
+
+    // For iOS, hide the picker after selection
+    if (Platform.OS === 'ios') {
+      setShowIOSPicker({...showIOSPicker, show: false});
+    }
+  };
+
+  // Open date or time picker based on platform
+  const showPicker = (mode: 'date' | 'time') => {
+    // Store the current mode in ref for Android to use
+    currentPickerMode.current = mode;
+
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: formData.dateTime,
+        onChange: handleDateChange,
+        mode: mode,
+        is24Hour: true,
+      });
+    } else {
+      // For iOS, show the picker inline
+      setShowIOSPicker({show: true, mode});
+    }
+  };
+
+  // Format date for display
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString();
+  };
+
+  // Simplified time formatter using explicit parts
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+
+    // Format as HH:MM (24-hour)
+    return `${hours.toString().padStart(2, '0')}:${minutes
+      .toString()
+      .padStart(2, '0')}`;
+
+    // Alternative: AM/PM format
+    // const ampm = hours >= 12 ? 'PM' : 'AM';
+    // const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+    // return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
   const uploadImage = async (uri: string): Promise<string> => {
@@ -171,11 +256,12 @@ export const AddTravelLog = (): React.JSX.Element => {
     setLoading(true);
     try {
       // Upload image to Firebase Storage
-      const imageUrl = await uploadImage(formData.imageUri);
+      //   const imageUrl = await uploadImage(formData.imageUri);
 
       // Add travel log to Firestore
       const logId = await addTravelLog(
-        imageUrl,
+        // imageUrl,
+        formData.imageUri,
         formData.location,
         formData.dateTime.getTime(),
         formData.details,
@@ -240,19 +326,31 @@ export const AddTravelLog = (): React.JSX.Element => {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Date and Time</Text>
-          <TouchableOpacity
-            style={styles.datePickerButton}
-            onPress={() => setShowDatePicker(true)}>
-            <Text style={styles.dateText}>
-              {formData.dateTime.toLocaleString()}
-            </Text>
-          </TouchableOpacity>
 
-          {showDatePicker && (
+          <View style={styles.dateTimeContainer}>
+            <TouchableOpacity
+              style={[styles.dateTimeButton, styles.dateButton]}
+              onPress={() => showPicker('date')}>
+              <Text style={styles.dateTimeText}>
+                {formatDate(formData.dateTime)}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.dateTimeButton, styles.timeButton]}
+              onPress={() => showPicker('time')}>
+              <Text style={styles.dateTimeText}>
+                {formatTime(formData.dateTime)}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* iOS inline picker */}
+          {Platform.OS === 'ios' && showIOSPicker.show && (
             <DateTimePicker
               value={formData.dateTime}
-              mode="datetime"
-              display="default"
+              mode={showIOSPicker.mode}
+              display="spinner"
               onChange={handleDateChange}
             />
           )}
@@ -342,12 +440,23 @@ const styles = StyleSheet.create({
   textArea: {
     height: 120,
   },
-  datePickerButton: {
+  dateTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  dateTimeButton: {
     backgroundColor: '#333',
     borderRadius: 8,
     padding: 12,
   },
-  dateText: {
+  dateButton: {
+    flex: 3,
+    marginRight: 8,
+  },
+  timeButton: {
+    flex: 2,
+  },
+  dateTimeText: {
     color: 'white',
     fontSize: 16,
   },
