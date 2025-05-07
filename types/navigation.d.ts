@@ -7,6 +7,7 @@ export type RootStackParamList = {
   SignIn: undefined;
   MainTabs: undefined;
   Profile: undefined;
+  AddTravelLog: undefined;
   // Profile: undefined;
   // VideoPlayerScreen: {
   //   videoId: string;
@@ -53,4 +54,10 @@ export type ProfileScreenRouteProp = RouteProp<RootStackParamList, 'Profile'>;
 export type HomeScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   'Home'
+>;
+
+// Add new navigation prop types
+export type AddTravelLogNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'AddTravelLog'
 >;
