@@ -83,6 +83,17 @@ export async function onGoogleButtonPress(
 }
 
 export async function signOut(navigation: SignInNavigationProp): Promise<void> {
-  await GoogleSignin.signOut();
-  navigation.navigate('SignIn');
+  Alert.alert('Sign out?', 'Are you sure you want to sign out?', [
+    {
+      text: 'Cancel',
+      style: 'cancel',
+    },
+    {
+      text: 'Sign out',
+      onPress: () => {
+        GoogleSignin.signOut();
+        navigation.navigate('SignIn');
+      },
+    },
+  ]);
 }

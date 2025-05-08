@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SignInNavigationProp} from '../../types/navigation';
 import {signOut} from '../../utils/functions/auth/authFunctions';
+import Icon from 'react-native-vector-icons/AntDesign';
 
 interface AppHeaderProps {
   showLogout?: boolean;
@@ -26,7 +27,7 @@ export const AppHeader = ({
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={() => signOut(navigation)}>
-            <Text style={styles.logoutText}>Logout</Text>
+            <Icon name="logout" color="red" size={24} />
           </TouchableOpacity>
         )}
 

@@ -1,12 +1,4 @@
-// import {collection, addDoc} from '@react-native-firebase/firestore';
-import {Alert} from 'react-native';
 import {getDb} from '../firebase/config';
-// import {savedVids} from '../../types/userData';
-// import {comment, video} from '../../types/video';
-
-// If db is undefined, import and use from context instead:
-// import {useFirebase} from '../firebase/context';
-// const {db} = useFirebase();
 
 export async function addUser(
   authToken: string,
@@ -14,20 +6,8 @@ export async function addUser(
   name: string,
   email: string,
   userPhotoUrl: string,
-  // likedVideos: string[] = [],
-  // savedVideos: savedVids[] = [],
 ): Promise<void> {
   try {
-    // await addDoc(collection(db, 'Users'), {
-    //   userId,
-    //   authToken,
-    //   name,
-    //   email,
-    //   userPhotoUrl,
-    //   // likedVideos,
-    //   // savedVideos,
-    // });
-
     const db = await getDb();
 
     db.collection('Users').add({
@@ -39,7 +19,6 @@ export async function addUser(
     });
 
     console.log('User added!');
-    Alert.alert('User added!');
   } catch (error) {
     console.warn('Error adding user:', error);
   }
