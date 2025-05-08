@@ -22,6 +22,7 @@ import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 // import storage from '@react-native-firebase/storage';
 import {addTravelLog} from '../../utils/functions/travelLogFunctions';
 import {TravelLogFormData} from '../../types/travelLog';
+import {GooglePlacesInput} from '../../components/Input/GooglePlaceInput';
 
 export const AddTravelLog = (): React.JSX.Element => {
   const navigation = useNavigation<AddTravelLogNavigationProp>();
@@ -325,6 +326,12 @@ export const AddTravelLog = (): React.JSX.Element => {
             placeholderTextColor="#888"
             value={formData.location}
             onChangeText={text => setFormData({...formData, location: text})}
+          />
+
+          <GooglePlacesInput
+            onPress={() => {
+              console.log('GooglePlacesInput onPress');
+            }}
           />
         </View>
 
