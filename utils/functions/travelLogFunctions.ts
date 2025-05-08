@@ -3,6 +3,7 @@ import {getDb} from '../firebase/config';
 import {TravelLog} from '../../types/travelLog';
 import {getLocalData} from './cachingFunctions';
 import {USER_ID} from '../../assets/constants';
+// import {addDoc, collection} from '@react-native-firebase/firestore';
 
 export async function addTravelLog(
   imageUrl: string,
@@ -11,6 +12,7 @@ export async function addTravelLog(
   details: string,
 ): Promise<string | null> {
   try {
+    console.log('first');
     const db = await getDb();
     const userId = await getLocalData(USER_ID);
 
@@ -28,9 +30,20 @@ export async function addTravelLog(
       createdAt: Date.now(),
     };
 
+    console.log('second, userid', userId);
+
+    // const docRef = await addDoc(collection(db, 'TravelLogs'), {
+    //   userId,
+    //   imageUrl,
+    //   location,
+    //   dateTime,
+    //   details,
+    //   createdAt: Date.now(),
+    // });
+
     const docRef = await db.collection('TravelLogs').add(travelLog);
     console.log('Travel log added with ID: ', docRef.id);
-    return docRef.id;
+    return docRef.id || true;
   } catch (error) {
     console.error('Error adding travel log:', error);
     Alert.alert('Error', 'Could not save travel log');

@@ -14,11 +14,15 @@ const firebaseConfig = {
 // Initialize Firebase and get Firestore instance
 export async function getDb() {
   // If Firebase is not initialized, initialize it
-  if (firebase.apps.length === 0) {
-    const app = await initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  try {
+    if (firebase.apps.length === 0) {
+      const app = await initializeApp(firebaseConfig);
+      const db = getFirestore(app);
 
-    return db;
+      return db;
+    }
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
   }
 
   // If Firebase is already initialized, return the existing instance

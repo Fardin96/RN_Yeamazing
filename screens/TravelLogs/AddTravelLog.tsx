@@ -19,7 +19,7 @@ import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
-import storage from '@react-native-firebase/storage';
+// import storage from '@react-native-firebase/storage';
 import {addTravelLog} from '../../utils/functions/travelLogFunctions';
 import {TravelLogFormData} from '../../types/travelLog';
 
@@ -63,7 +63,7 @@ export const AddTravelLog = (): React.JSX.Element => {
 
   //   const requestCameraPermission = async (): Promise<boolean> => {
   //     if (Platform.OS === 'android') {
-  //       const cameraPermission = PermissionsAndroid.PERMISSIONS.CAMERA;
+  //       const cameraPermission = PermissionsAndroid.PERMISSIONS.Camera result:CAMERA;
   //       const storagePermission =
   //         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
 
@@ -120,7 +120,7 @@ export const AddTravelLog = (): React.JSX.Element => {
         quality: 0.8,
       });
 
-      console.log('Image library result:', result);
+      // console.log('Image library result:', result);
 
       if (result.assets && result.assets.length > 0) {
         setFormData({...formData, imageUri: result.assets[0].uri || ''});
@@ -147,7 +147,7 @@ export const AddTravelLog = (): React.JSX.Element => {
       saveToPhotos: true,
     });
 
-    console.log('Camera result:', result);
+    // console.log('Camera result:', result);
 
     if (result.assets && result.assets.length > 0) {
       setFormData({...formData, imageUri: result.assets[0].uri || ''});
@@ -235,12 +235,12 @@ export const AddTravelLog = (): React.JSX.Element => {
     // return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
-  const uploadImage = async (uri: string): Promise<string> => {
-    const filename = uri.substring(uri.lastIndexOf('/') + 1);
-    const storageRef = storage().ref(`travel_logs/${filename}`);
-    await storageRef.putFile(uri);
-    return storageRef.getDownloadURL();
-  };
+  // const uploadImage = async (uri: string): Promise<string> => {
+  //   const filename = uri.substring(uri.lastIndexOf('/') + 1);
+  //   const storageRef = storage().ref(`travel_logs/${filename}`);
+  //   await storageRef.putFile(uri);
+  //   return storageRef.getDownloadURL();
+  // };
 
   const handleSave = async () => {
     if (!formData.location || !formData.details) {
@@ -266,6 +266,7 @@ export const AddTravelLog = (): React.JSX.Element => {
         formData.dateTime.getTime(),
         formData.details,
       );
+      console.log('logId', logId);
 
       if (logId) {
         setLoading(false);
@@ -275,6 +276,9 @@ export const AddTravelLog = (): React.JSX.Element => {
       console.error('Error saving travel log:', error);
       setLoading(false);
       Alert.alert('Error saving travel log');
+    } finally {
+      setLoading(false);
+      navigation.goBack();
     }
   };
 
@@ -372,7 +376,7 @@ export const AddTravelLog = (): React.JSX.Element => {
 
         <TouchableOpacity
           style={styles.saveButton}
-          onPress={handleSave}
+          onPress={() => handleSave()}
           disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#fff" />
