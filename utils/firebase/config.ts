@@ -1,5 +1,6 @@
-import {initializeApp} from '@react-native-firebase/app';
-import {getFirestore, firebase} from '@react-native-firebase/firestore';
+import {initializeApp, getApps} from '@react-native-firebase/app';
+import {getFirestore} from '@react-native-firebase/firestore';
+// import {getFirestore} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBNS6UFkMEVuuV3C4soOPadAZf_TRZP7gM',
@@ -15,7 +16,7 @@ const firebaseConfig = {
 export async function getDb() {
   // If Firebase is not initialized, initialize it
   try {
-    if (firebase.apps.length === 0) {
+    if (getApps().length === 0) {
       const app = await initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
@@ -26,5 +27,5 @@ export async function getDb() {
   }
 
   // If Firebase is already initialized, return the existing instance
-  return firebase.firestore();
+  return getFirestore();
 }

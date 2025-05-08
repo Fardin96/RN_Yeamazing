@@ -243,6 +243,7 @@ export const AddTravelLog = (): React.JSX.Element => {
   // };
 
   const handleSave = async () => {
+    console.log('handleSave started');
     if (!formData.location || !formData.details) {
       Alert.alert('Please fill in all fields');
       return;
@@ -255,31 +256,30 @@ export const AddTravelLog = (): React.JSX.Element => {
 
     setLoading(true);
     try {
-      // Upload image to Firebase Storage
-      //   const imageUrl = await uploadImage(formData.imageUri);
-
-      // Add travel log to Firestore
+      console.log('Before addTravelLog');
       const logId = await addTravelLog(
-        // imageUrl,
         formData.imageUri,
         formData.location,
         formData.dateTime.getTime(),
         formData.details,
       );
-      console.log('logId', logId);
+      console.log('After addTravelLog, logId:', logId);
 
-      if (logId) {
-        setLoading(false);
-        navigation.goBack();
-      }
+      // if (logId) {
+      //   setLoading(false);
+      //   navigation.goBack();
+      // }
     } catch (error) {
-      console.error('Error saving travel log:', error);
+      console.error('Error saving travel log (handleSave):', error);
       setLoading(false);
       Alert.alert('Error saving travel log');
-    } finally {
-      setLoading(false);
-      navigation.goBack();
     }
+    // finally {
+    //   console.log('handleSave finally block');
+    //   // setLoading(false); // Moved inside try and catch
+    //   // navigation.goBack(); // Moved inside the if (logId) block for success
+    // }
+    // console.log('handleSave finished (outside try/catch/finally)');
   };
 
   return (
@@ -376,7 +376,13 @@ export const AddTravelLog = (): React.JSX.Element => {
 
         <TouchableOpacity
           style={styles.saveButton}
-          onPress={() => handleSave()}
+          onPress={() => {
+            handleSave();
+            setInterval(() => {
+              setLoading(false);
+              navigation.navigate('MainTabs');
+            }, 3000);
+          }}
           disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#fff" />
