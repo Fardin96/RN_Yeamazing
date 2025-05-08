@@ -327,12 +327,6 @@ export const AddTravelLog = (): React.JSX.Element => {
             value={formData.location}
             onChangeText={text => setFormData({...formData, location: text})}
           />
-
-          <GooglePlacesInput
-            onPress={() => {
-              console.log('GooglePlacesInput onPress');
-            }}
-          />
         </View>
 
         <View style={styles.inputGroup}>
