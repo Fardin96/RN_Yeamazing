@@ -1,20 +1,29 @@
+import React from 'react';
+import {View, Text, ActivityIndicator, StyleSheet} from 'react-native';
 import {AppHeader} from './Header/AppHeader';
-import {ActivityIndicator, View, StyleSheet} from 'react-native';
 
-export const Header = (showLogout: boolean): React.ReactElement => (
+export const Fallback = (): React.JSX.Element => {
+  return (
+    <View style={styles.container}>
+      <ActivityIndicator size="large" color="#007BFF" />
+      <Text style={styles.text}>Loading...</Text>
+    </View>
+  );
+};
+
+export const Header = (showLogout: boolean): React.JSX.Element => (
   <AppHeader showLogout={showLogout} />
 );
 
-export const Fallback = (): React.ReactElement => (
-  <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" color="#0000ff" />
-  </View>
-);
-
 const styles = StyleSheet.create({
-  loadingContainer: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#191919',
+  },
+  text: {
+    color: 'white',
+    marginTop: 10,
   },
 });
