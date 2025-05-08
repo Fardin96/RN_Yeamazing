@@ -1,23 +1,45 @@
-import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import React, {useState, useEffect} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import SignIn from '../screens/Auth/SignIn';
 import {BottomTabs} from './BottomTabs';
 import {Profile} from '../screens/Profile/Profile';
 import {RootStackParamList} from '../types/navigation';
-import {AppHeader} from '../components/Header/AppHeader';
 import {AddTravelLog} from '../screens/TravelLogs/AddTravelLog';
+import {NavigationContainer} from '@react-navigation/native';
+import {isAuthenticated} from '../utils/functions/auth/authFunctions';
+import {Fallback, Header} from '../components/CommonRenders';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-const Header = (showLogout: boolean): React.ReactElement => (
-  <AppHeader showLogout={showLogout} />
-);
+export function StackNavigation() {
+  const [isAuth, setIsAuth] = useState<boolean | null>(null); // null means "still checking"
 
-export const StackNavigation = () => {
+  useEffect(() => {
+    // Check authentication on component mount
+    const checkAuth = async () => {
+      try {
+        const authStatus = await isAuthenticated();
+        setIsAuth(authStatus);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuth(false); // Default to not authenticated on error
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Show loading indicator while checking authentication
+  if (isAuth === null) {
+    return <Fallback />;
+  }
+
+  // Once we know the auth status, render appropriate navigator
   return (
-    <NavigationContainer>
-      <Stack.Navigator id={undefined} initialRouteName="SignIn">
+    <NavigationContainer fallback={<Fallback />}>
+      <Stack.Navigator
+        id={undefined}
+        initialRouteName={isAuth ? 'MainTabs' : 'SignIn'}>
         <Stack.Screen
           name="SignIn"
           component={SignIn}
@@ -51,4 +73,4 @@ export const StackNavigation = () => {
       </Stack.Navigator>
     </NavigationContainer>
   );
-};
+}

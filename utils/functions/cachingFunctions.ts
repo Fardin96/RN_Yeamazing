@@ -28,3 +28,11 @@ export async function clearLocalData(key: string | undefined): Promise<void> {
     console.warn(`Error removing data; KEY: ${key}; ERROR: ${e}`);
   }
 }
+
+export async function clearAllLocalData(): Promise<void> {
+  try {
+    await AsyncStorage.clear();
+  } catch (e) {
+    console.warn(`Error clearing all data; ERROR: ${e}`);
+  }
+}

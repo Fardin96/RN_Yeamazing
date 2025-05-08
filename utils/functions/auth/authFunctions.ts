@@ -1,6 +1,10 @@
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {SignInResult} from '../../../types/userData';
-import {setLocalData} from '../cachingFunctions';
+import {
+  clearAllLocalData,
+  getLocalData,
+  setLocalData,
+} from '../cachingFunctions';
 import {
   AUTH_TOKEN,
   USER_EMAIL,
@@ -92,8 +96,20 @@ export async function signOut(navigation: SignInNavigationProp): Promise<void> {
       text: 'Sign out',
       onPress: () => {
         GoogleSignin.signOut();
+        clearAllLocalData();
         navigation.navigate('SignIn');
       },
     },
   ]);
+}
+
+export async function isAuthenticated(): Promise<boolean> {
+  const user = await getLocalData(USER_ID);
+  console.log('user', user);
+
+  if (typeof user === 'string') {
+    return true;
+  }
+
+  return false;
 }
