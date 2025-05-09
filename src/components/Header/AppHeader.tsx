@@ -2,8 +2,9 @@ import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SignInNavigationProp} from '../../types/navigation';
-import {signOut} from '../../utils/functions/auth/authFunctions';
 import Icon from 'react-native-vector-icons/AntDesign';
+import {logoutUser} from '../../rtk/slices/userSlice';
+import {useAppDispatch} from '../../rtk/hooks';
 
 interface AppHeaderProps {
   showLogout?: boolean;
@@ -12,11 +13,17 @@ interface AppHeaderProps {
 export const AppHeader = ({
   showLogout = true,
 }: AppHeaderProps): React.JSX.Element => {
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<SignInNavigationProp>();
 
   const handleProfilePress = () => {
     navigation.navigate('Profile');
   };
+
+  async function handleLogout(): Promise<void> {
+    await dispatch(logoutUser());
+    navigation.navigate('SignIn');
+  }
 
   return (
     <View style={styles.header}>
@@ -24,9 +31,7 @@ export const AppHeader = ({
 
       <View style={styles.actions}>
         {showLogout && (
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={() => signOut(navigation)}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Icon name="logout" color="red" size={24} />
           </TouchableOpacity>
         )}

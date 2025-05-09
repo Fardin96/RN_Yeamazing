@@ -2,7 +2,7 @@ import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 
-// Main stack that includes auth flow and app content
+// Main stack
 export type RootStackParamList = {
   SignIn: undefined;
   MainTabs: undefined;
@@ -45,11 +45,6 @@ export type ChatsNavigationProp = BottomTabNavigationProp<
 
 // Route prop types
 export type ProfileScreenRouteProp = RouteProp<RootStackParamList, 'Profile'>;
-
-// export type VideoPlayerScreenRouteProp = RouteProp<
-//   RootStackParamList,
-//   'VideoPlayerScreen'
-// >;
 
 export type HomeScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
