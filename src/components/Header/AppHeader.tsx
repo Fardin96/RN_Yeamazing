@@ -1,10 +1,10 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SignInNavigationProp} from '../../types/navigation';
 import Icon from 'react-native-vector-icons/AntDesign';
 import {logoutUser} from '../../rtk/slices/userSlice';
-import {useAppDispatch} from '../../rtk/hooks';
+import {useAppDispatch, useAppSelector} from '../../rtk/hooks';
 
 interface AppHeaderProps {
   showLogout?: boolean;
@@ -15,6 +15,7 @@ export const AppHeader = ({
 }: AppHeaderProps): React.JSX.Element => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<SignInNavigationProp>();
+  const user = useAppSelector(state => state.user);
 
   const handleProfilePress = () => {
     navigation.navigate('Profile');
@@ -39,7 +40,11 @@ export const AppHeader = ({
         <TouchableOpacity
           style={styles.profileIcon}
           onPress={handleProfilePress}>
-          <Text style={styles.profileText}>P</Text>
+          <Image
+            source={{uri: user.photoUrl}}
+            style={styles.profileIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
     </View>
