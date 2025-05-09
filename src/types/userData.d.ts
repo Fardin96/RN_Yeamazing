@@ -1,11 +1,3 @@
-export type savedVids = {
-  videoId: string;
-  videoTitle: string;
-  videoThumbnail: string;
-  videoUrl: string;
-  videoDescription: string;
-};
-
 export type SignInResult = {
   type: string;
   data?: {
@@ -22,3 +14,13 @@ export type SignInResult = {
     };
   };
 };
+
+export interface UserState {
+  isAuthenticated: boolean;
+  userId: string | null;
+  name: string | null;
+  email: string | null;
+  photoUrl: string | null;
+  loading: boolean;
+  error: string | null;
+}

@@ -15,7 +15,6 @@ export function StackNavigation() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null); // null means "still checking"
 
   useEffect(() => {
-    // Check authentication on component mount
     const checkAuth = async () => {
       try {
         const authStatus = await isAuthenticated();
@@ -34,7 +33,6 @@ export function StackNavigation() {
     return <Fallback />;
   }
 
-  // Once we know the auth status, render appropriate navigator
   return (
     <NavigationContainer fallback={<Fallback />}>
       <Stack.Navigator

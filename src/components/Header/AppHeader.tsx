@@ -3,17 +3,13 @@ import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SignInNavigationProp} from '../../types/navigation';
 import Icon from 'react-native-vector-icons/AntDesign';
-import {logoutUser} from '../../rtk/slices/userSlice';
-import {useAppDispatch, useAppSelector} from '../../rtk/hooks';
-
-interface AppHeaderProps {
-  showLogout?: boolean;
-}
+import {useAppSelector} from '../../rtk/hooks';
+import {signOut} from '../../utils/functions/auth/authFunctions';
+import {AppHeaderProps} from '../../types/appHeader';
 
 export const AppHeader = ({
   showLogout = true,
 }: AppHeaderProps): React.JSX.Element => {
-  const dispatch = useAppDispatch();
   const navigation = useNavigation<SignInNavigationProp>();
   const user = useAppSelector(state => state.user);
 
@@ -21,18 +17,15 @@ export const AppHeader = ({
     navigation.navigate('Profile');
   };
 
-  async function handleLogout(): Promise<void> {
-    await dispatch(logoutUser());
-    navigation.navigate('SignIn');
-  }
-
   return (
     <View style={styles.header}>
       <Text style={styles.title}>Travel Diary</Text>
 
       <View style={styles.actions}>
         {showLogout && (
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => signOut(navigation)}>
             <Icon name="logout" color="red" size={24} />
           </TouchableOpacity>
         )}
