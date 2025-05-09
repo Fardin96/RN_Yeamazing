@@ -1,5 +1,5 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
-import {TravelLog} from '../../types/travelLog';
+import {TravelLog, TravelLogFormData} from '../../types/travelLog';
 import {
   addTravelLog as addTravelLogToFirestore,
   fetchTravelLogs as fetchTravelLogsFromFirestore,
@@ -24,7 +24,7 @@ export const fetchTravelLogs = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     try {
       const logs = await fetchTravelLogsFromFirestore();
-      return logs;
+      return logs as TravelLog[];
     } catch (error) {
       console.error('Error fetching travel logs:', error);
       if (error instanceof Error) {
@@ -38,24 +38,14 @@ export const fetchTravelLogs = createAsyncThunk(
 export const addTravelLog = createAsyncThunk(
   'travelLogs/add',
   async (
-    {
-      imageUrl,
-      location,
-      dateTime,
-      details,
-    }: {
-      imageUrl: string;
-      location: string;
-      dateTime: number;
-      details: string;
-    },
+    {imageUri, location, dateTime, details}: TravelLogFormData,
     {rejectWithValue},
   ) => {
     try {
       const logId = await addTravelLogToFirestore(
-        imageUrl,
+        imageUri,
         location,
-        dateTime,
+        dateTime.getTime(),
         details,
       );
 
@@ -66,9 +56,9 @@ export const addTravelLog = createAsyncThunk(
       // Return the complete log object
       return {
         id: logId,
-        imageUrl,
+        imageUri,
         location,
-        dateTime,
+        dateTime: dateTime.getTime(),
         details,
         createdAt: Date.now(),
       } as TravelLog;

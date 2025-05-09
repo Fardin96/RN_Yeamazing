@@ -13,10 +13,11 @@ import {
 import {colors} from '../../assets/colors/colors';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {AddTravelLogNavigationProp} from '../../types/navigation';
-import {fetchTravelLogs} from '../../utils/functions/travelLogFunctions';
 import {TravelLog} from '../../types/travelLog';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {TravelCard} from '../../components/TravelCard';
+import {fetchTravelLogs} from '../../rtk/slices/travelLogSlice';
+import {useAppDispatch, useAppSelector} from '../../rtk/hooks';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android') {
@@ -26,23 +27,17 @@ if (Platform.OS === 'android') {
 }
 
 export const TravelLogs = (): React.JSX.Element => {
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<AddTravelLogNavigationProp>();
-  const [logs, setLogs] = useState<TravelLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [compactView, setCompactView] = useState(false);
+  const {logs, loading} = useAppSelector(state => state.travelLogs);
 
-  const loadTravelLogs = async () => {
-    setLoading(true);
-    const fetchedLogs = await fetchTravelLogs();
-    setLogs(fetchedLogs);
-    setLoading(false);
-  };
+  const [compactView, setCompactView] = useState(false);
 
   // Load logs when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      loadTravelLogs();
-    }, []),
+      dispatch(fetchTravelLogs());
+    }, [dispatch]),
   );
 
   const toggleViewMode = () => {

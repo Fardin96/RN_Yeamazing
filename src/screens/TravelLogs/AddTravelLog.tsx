@@ -10,7 +10,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  //   PermissionsAndroid,
 } from 'react-native';
 import {colors} from '../../assets/colors/colors';
 import {useNavigation} from '@react-navigation/native';
@@ -18,13 +17,15 @@ import {AddTravelLogNavigationProp} from '../../types/navigation';
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
-import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
-// import storage from '@react-native-firebase/storage';
-import {addTravelLog} from '../../utils/functions/travelLogFunctions';
+import {addTravelLog} from '../../rtk/slices/travelLogSlice';
 import {TravelLogFormData} from '../../types/travelLog';
-import {GooglePlacesInput} from '../../components/Input/GooglePlaceInput';
+import {useAppDispatch} from '../../rtk/hooks';
+import {formatTime} from '../../utils/functions/timeDate';
+import {formatDate} from '../../utils/functions/timeDate';
+import {captureImage, selectImage} from '../../utils/functions/cameraUtils';
 
 export const AddTravelLog = (): React.JSX.Element => {
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<AddTravelLogNavigationProp>();
   const [formData, setFormData] = useState<TravelLogFormData>({
     imageUri: '',
@@ -44,116 +45,6 @@ export const AddTravelLog = (): React.JSX.Element => {
   const currentPickerMode = useRef<'date' | 'time'>('date');
 
   const [loading, setLoading] = useState<boolean>(false);
-
-  //   const requestGalleryPermission = async (): Promise<boolean> => {
-  //     console.log('+-----------------------PERMISSIONS---------------------+');
-  //     if (Platform.OS === 'android') {
-  //       const permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
-  //       const hasPermission = await PermissionsAndroid.check(permission);
-  //       console.log('permission', permission);
-  //       console.log('hasPermission', hasPermission);
-  //       if (!hasPermission) {
-  //         const status = await PermissionsAndroid.request(permission);
-  //         console.log('status', status);
-  //         return status === 'granted';
-  //       }
-  //       return true;
-  //     }
-  //     return true;
-  //   };
-
-  //   const requestCameraPermission = async (): Promise<boolean> => {
-  //     if (Platform.OS === 'android') {
-  //       const cameraPermission = PermissionsAndroid.PERMISSIONS.Camera result:CAMERA;
-  //       const storagePermission =
-  //         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
-
-  //       const hasCameraPermission = await PermissionsAndroid.check(
-  //         cameraPermission,
-  //       );
-  //       const hasStoragePermission = await PermissionsAndroid.check(
-  //         storagePermission,
-  //       );
-
-  //       if (!hasCameraPermission || !hasStoragePermission) {
-  //         const cameraStatus = await PermissionsAndroid.request(cameraPermission);
-  //         const storageStatus = await PermissionsAndroid.request(
-  //           storagePermission,
-  //         );
-
-  //         return cameraStatus === 'granted' && storageStatus === 'granted';
-  //       }
-  //       return true;
-  //     }
-  //     return true; // iOS handles permissions
-  //   };
-
-  const selectImage = async (): Promise<void> => {
-    // const hasPermission = await requestGalleryPermission();
-    // console.log('hasPermission', hasPermission);
-
-    // if (!hasPermission) {
-    //   Alert.alert(
-    //     'Permission Required',
-    //     'Storage access is required to select images. Please enable it in app settings.',
-    //     [
-    //       {text: 'Cancel', style: 'cancel'},
-    //       {
-    //         text: 'Open Settings',
-    //         onPress: () => {
-    //           // Open app settings so user can enable permissions
-    //           if (Platform.OS === 'ios') {
-    //             Linking.openURL('app-settings:');
-    //           } else {
-    //             Linking.openSettings();
-    //           }
-    //         },
-    //       },
-    //     ],
-    //   );
-    //   return;
-    // }
-
-    // Now actually launch the image library
-    try {
-      const result = await launchImageLibrary({
-        mediaType: 'photo',
-        quality: 0.8,
-      });
-
-      // console.log('Image library result:', result);
-
-      if (result.assets && result.assets.length > 0) {
-        setFormData({...formData, imageUri: result.assets[0].uri || ''});
-      }
-    } catch (error) {
-      console.error('Error selecting image:', error);
-      Alert.alert('Error', 'Failed to select image');
-    }
-  };
-
-  const captureImage = async (): Promise<void> => {
-    // const hasPermission = await requestCameraPermission();
-    // if (!hasPermission) {
-    //   Alert.alert(
-    //     'Permission denied',
-    //     'Camera and storage permissions are required to take photos',
-    //   );
-    //   return;
-    // }
-
-    const result = await launchCamera({
-      mediaType: 'photo',
-      quality: 0.8,
-      saveToPhotos: true,
-    });
-
-    // console.log('Camera result:', result);
-
-    if (result.assets && result.assets.length > 0) {
-      setFormData({...formData, imageUri: result.assets[0].uri || ''});
-    }
-  };
 
   const handleDateChange = (event: any, selectedDate?: Date): void => {
     // Handle dismissal for iOS
@@ -215,36 +106,7 @@ export const AddTravelLog = (): React.JSX.Element => {
     }
   };
 
-  // Format date for display
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString();
-  };
-
-  // Simplified time formatter using explicit parts
-  const formatTime = (date: Date): string => {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-
-    // Format as HH:MM (24-hour)
-    return `${hours.toString().padStart(2, '0')}:${minutes
-      .toString()
-      .padStart(2, '0')}`;
-
-    // Alternative: AM/PM format
-    // const ampm = hours >= 12 ? 'PM' : 'AM';
-    // const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
-    // return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-  };
-
-  // const uploadImage = async (uri: string): Promise<string> => {
-  //   const filename = uri.substring(uri.lastIndexOf('/') + 1);
-  //   const storageRef = storage().ref(`travel_logs/${filename}`);
-  //   await storageRef.putFile(uri);
-  //   return storageRef.getDownloadURL();
-  // };
-
   const handleSave = async () => {
-    console.log('handleSave started');
     if (!formData.location || !formData.details) {
       Alert.alert('Please fill in all fields');
       return;
@@ -257,30 +119,12 @@ export const AddTravelLog = (): React.JSX.Element => {
 
     setLoading(true);
     try {
-      console.log('Before addTravelLog');
-      const logId = await addTravelLog(
-        formData.imageUri,
-        formData.location,
-        formData.dateTime.getTime(),
-        formData.details,
-      );
-      console.log('After addTravelLog, logId:', logId);
-
-      // if (logId) {
-      //   setLoading(false);
-      //   navigation.goBack();
-      // }
+      await dispatch(addTravelLog(formData));
     } catch (error) {
       console.error('Error saving travel log (handleSave):', error);
       setLoading(false);
       Alert.alert('Error saving travel log');
     }
-    // finally {
-    //   console.log('handleSave finally block');
-    //   // setLoading(false); // Moved inside try and catch
-    //   // navigation.goBack(); // Moved inside the if (logId) block for success
-    // }
-    // console.log('handleSave finished (outside try/catch/finally)');
   };
 
   return (
@@ -290,7 +134,7 @@ export const AddTravelLog = (): React.JSX.Element => {
 
         <TouchableOpacity
           style={styles.imageContainer}
-          onPress={() => selectImage()}>
+          onPress={() => selectImage(setFormData, formData)}>
           {formData.imageUri ? (
             <Image
               source={{uri: formData.imageUri}}
@@ -307,13 +151,13 @@ export const AddTravelLog = (): React.JSX.Element => {
         <View style={styles.imageButtonsContainer}>
           <TouchableOpacity
             style={styles.imageButton}
-            onPress={() => selectImage()}>
+            onPress={() => selectImage(setFormData, formData)}>
             <Text style={styles.buttonText}>Choose from Gallery</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.imageButton}
-            onPress={() => captureImage()}>
+            onPress={() => captureImage(setFormData, formData)}>
             <Text style={styles.buttonText}>Take Photo</Text>
           </TouchableOpacity>
         </View>

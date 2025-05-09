@@ -1,7 +1,7 @@
 export interface TravelLog {
   id?: string;
   userId: string;
-  imageUrl: string;
+  imageUri: string;
   location: string;
   dateTime: number; // timestamp
   details: string;

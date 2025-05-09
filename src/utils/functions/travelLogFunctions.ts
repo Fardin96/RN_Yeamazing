@@ -6,7 +6,7 @@ import {USER_ID} from '../../assets/constants';
 import {addDoc, collection} from '@react-native-firebase/firestore';
 
 export async function addTravelLog(
-  imageUrl: string,
+  imageUri: string,
   location: string,
   dateTime: number,
   details: string,
@@ -23,7 +23,7 @@ export async function addTravelLog(
 
     const travelLog: TravelLog = {
       userId,
-      imageUrl,
+      imageUri,
       location,
       dateTime,
       details,
