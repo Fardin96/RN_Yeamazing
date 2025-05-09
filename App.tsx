@@ -1,8 +1,8 @@
 import React from 'react';
 import {StatusBar} from 'react-native';
 import {Provider} from 'react-redux';
-import {store} from './rtk/store/store';
-import {StackNavigation} from './navigation/StackNavigator';
+import {store} from './src/rtk/store/store';
+import {StackNavigation} from './src/navigation/StackNavigator';
 import {ThemeProvider} from './src/context/ThemeContext';
 
 const App = () => {
