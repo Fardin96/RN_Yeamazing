@@ -4,13 +4,6 @@ import {Provider} from 'react-redux';
 import {store} from './rtk/store/store';
 import {StackNavigation} from './navigation/StackNavigator';
 import {ThemeProvider} from './src/context/ThemeContext';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-
-// Initialize Google Sign-In
-GoogleSignin.configure({
-  webClientId: 'YOUR_WEB_CLIENT_ID',
-  offlineAccess: true,
-});
 
 const App = () => {
   return (

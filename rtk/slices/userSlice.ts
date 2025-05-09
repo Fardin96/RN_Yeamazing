@@ -136,10 +136,12 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+
       // Logout
       .addCase(logoutUser.fulfilled, state => {
         Object.assign(state, initialState);
       })
+
       // Check Auth
       .addCase(checkAuthStatus.pending, state => {
         state.loading = true;

@@ -132,6 +132,7 @@ const travelLogSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+
       // Add travel log
       .addCase(addTravelLog.pending, state => {
         state.loading = true;

@@ -10,11 +10,13 @@ import {onGoogleButtonPress} from '../../utils/functions/auth/authFunctions';
 function SignIn(): React.JSX.Element {
   const navigation = useNavigation<SignInNavigationProp>();
 
+  // Initialize Google Sign-In
   useEffect(() => {
     const webClientId = FIREBASE_WEB_CLIENT_ID || '';
 
     GoogleSignin.configure({
       webClientId,
+      offlineAccess: true,
     });
   }, []);
 
