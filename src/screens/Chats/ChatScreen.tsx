@@ -12,16 +12,20 @@ import {
 } from 'react-native';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {colors} from '../../assets/colors/colors';
-import {useAppDispatch, useAppSelector} from '../../rtk/hooks';
 import {
-  fetchMessages,
-  sendMessage,
-  markMessagesAsRead,
-  upsertMessage,
-} from '../../rtk/slices/chatSlice';
-import {subscribeToMessages} from '../../utils/firebase/chatFirebase';
+  fetchMessagesFromFirebase,
+  sendMessageToFirebase,
+  updateReadStatusInFirebase,
+  subscribeToMessages,
+  getUserNameById,
+} from '../../utils/firebase/chatFirebase';
 import {format} from 'date-fns';
 import {RootStackParamList} from '../../types/navigation';
+import {Message} from '../../types/chat';
+import {USER_ID} from '../../assets/constants';
+import {getLocalData} from '../../utils/functions/cachingFunctions';
+import {getDb} from '../../utils/firebase/config';
+import {doc, getDoc} from '@react-native-firebase/firestore';
 
 type ChatScreenRouteProp = RouteProp<RootStackParamList, 'ChatScreen'>;
 
@@ -29,36 +33,45 @@ export const ChatScreen = (): React.JSX.Element => {
   const route = useRoute<ChatScreenRouteProp>();
   const {conversationId} = route.params;
   const navigation = useNavigation();
-  const dispatch = useAppDispatch();
 
   // Local state
   const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [otherUserName, setOtherUserName] = useState<string>('Chat');
   const flatListRef = useRef<FlatList>(null);
 
-  // Redux state
-  const userId = useAppSelector(state => state.user.userId);
-  const messagesObj = useAppSelector(
-    state => state.chats.messages[conversationId] || {},
-  );
-  const messages = Object.values(messagesObj).sort(
-    (a, b) => a.timestamp - b.timestamp,
-  );
-  const loading = useAppSelector(state => state.chats.loading);
-  const conversation = useAppSelector(
-    state => state.chats.conversations[conversationId],
-  );
-
-  // Get participant info for header
-  const otherParticipantId = conversation?.participants.find(
-    id => id !== userId,
-  );
-
-  // Fetch messages when the screen loads
+  // Get the current user ID from local storage
   useEffect(() => {
-    if (conversationId) {
-      dispatch(fetchMessages(conversationId));
-    }
-  }, [conversationId, dispatch]);
+    const getUserId = async () => {
+      const id = await getLocalData(USER_ID);
+      setUserId(id);
+    };
+    getUserId();
+  }, []);
+
+  // Fetch messages when the screen loads and user ID is available
+  useEffect(() => {
+    if (!conversationId || !userId) return;
+
+    const loadMessages = async () => {
+      setLoading(true);
+      try {
+        const result = await fetchMessagesFromFirebase(conversationId);
+        setMessages(result.messages.sort((a, b) => a.timestamp - b.timestamp));
+
+        // Mark messages as read
+        await updateReadStatusInFirebase(conversationId, userId);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, [conversationId, userId]);
 
   // Set up real-time message listener
   useEffect(() => {
@@ -66,10 +79,8 @@ export const ChatScreen = (): React.JSX.Element => {
 
     if (conversationId) {
       unsubscribe = subscribeToMessages(conversationId, newMessages => {
-        // Update each message in the store
-        newMessages.forEach(message => {
-          dispatch(upsertMessage(message));
-        });
+        // Sort messages by timestamp
+        setMessages(newMessages.sort((a, b) => a.timestamp - b.timestamp));
       });
     }
 
@@ -79,21 +90,43 @@ export const ChatScreen = (): React.JSX.Element => {
         unsubscribe();
       }
     };
-  }, [conversationId, dispatch]);
+  }, [conversationId]);
 
-  // Mark messages as read when the user opens the conversation
+  // Load conversation details to get participant info
   useEffect(() => {
-    if (conversationId && userId) {
-      dispatch(markMessagesAsRead({conversationId, userId}));
-    }
-  }, [conversationId, userId, dispatch]);
+    const loadConversationDetails = async () => {
+      if (!conversationId || !userId) return;
 
-  // Set up title in header
-  useEffect(() => {
-    navigation.setOptions({
-      title: otherParticipantId || 'Chat',
-    });
-  }, [navigation, otherParticipantId]);
+      try {
+        // Fetch the conversation to get participants
+        const db = await getDb();
+        const docRef = doc(db, 'conversations', conversationId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const conversationData = docSnap.data();
+          const otherParticipantId = conversationData.participants.find(
+            (id: string) => id !== userId,
+          );
+
+          if (otherParticipantId) {
+            // Get the other user's name
+            const name = await getUserNameById(otherParticipantId);
+            setOtherUserName(name);
+
+            // Update the header title
+            navigation.setOptions({
+              title: name,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading conversation details:', error);
+      }
+    };
+
+    loadConversationDetails();
+  }, [conversationId, userId, navigation]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -108,16 +141,19 @@ export const ChatScreen = (): React.JSX.Element => {
   };
 
   // Handle sending a new message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim() && conversationId && userId) {
-      dispatch(
-        sendMessage({
+      try {
+        setNewMessage('');
+
+        await sendMessageToFirebase({
           conversationId,
           senderId: userId,
           text: newMessage.trim(),
-        }),
-      );
-      setNewMessage('');
+        });
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
     }
   };
 
@@ -170,6 +206,7 @@ export const ChatScreen = (): React.JSX.Element => {
           placeholderTextColor="#999"
           multiline
         />
+
         <TouchableOpacity
           style={[
             styles.sendButton,

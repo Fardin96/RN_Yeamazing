@@ -128,7 +128,7 @@ export const AddTravelLog = (): React.JSX.Element => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         {/* <Text style={styles.title}>Add Travel Log</Text> */}
 

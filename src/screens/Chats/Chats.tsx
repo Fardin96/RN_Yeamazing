@@ -13,13 +13,17 @@ import {ChatStackScreenNavigationProp} from '../../types/navigation';
 import {format} from 'date-fns';
 import {
   fetchConversationsFromFirebase,
+  fetchMessagesFromFirebase,
   setupPresence,
   subscribeToConversations,
+  subscribeToMessages,
   getUserNameById,
 } from '../../utils/firebase/chatFirebase';
 import {USER_ID} from '../../assets/constants';
 import {getLocalData} from '../../utils/functions/cachingFunctions';
-import {Conversation} from '../../types/chat';
+import {Conversation, Message} from '../../types/chat';
+import {collection, getDocs} from 'firebase/firestore';
+import {getDb} from '../../utils/firebase/config';
 
 export const Chats = (): React.JSX.Element => {
   const navigation = useNavigation<ChatStackScreenNavigationProp>();
@@ -29,41 +33,107 @@ export const Chats = (): React.JSX.Element => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [lastMessages, setLastMessages] = useState<Record<string, Message>>({});
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
 
-  // Function to get participant names
-  const fetchUserNames = useCallback(
-    async (convos: Conversation[]) => {
-      if (!userId) return;
+  console.log('conversations', conversations);
 
-      const participantIds = new Set<string>();
+  // Function to get all user names at once
+  const fetchUserNames = useCallback(async () => {
+    if (!userId) {
+      return;
+    }
 
-      // Collect all unique participant IDs
-      convos.forEach(convo => {
-        convo.participants.forEach(participantId => {
-          if (participantId !== userId) {
-            participantIds.add(participantId);
-          }
-        });
+    try {
+      // Get Firestore instance
+      const db = await getDb();
+      const usersCollection = collection(db, 'Users');
+      const usersSnapshot = await getDocs(usersCollection);
+
+      // Create a mapping of userId -> name
+      const namesMap: Record<string, string> = {};
+      usersSnapshot.docs.forEach(doc => {
+        const userData = doc.data();
+        if (userData.userId && userData.name) {
+          namesMap[userData.userId] = userData.name;
+        }
       });
 
-      // Fetch names for all participants
-      const namesMap: Record<string, string> = {};
-      for (const participantId of participantIds) {
-        // Skip if we already have the name
-        if (userNames[participantId]) continue;
+      // Update the userNames state
+      setUserNames(namesMap);
+    } catch (error) {
+      console.error('Error fetching user names:', error);
+    }
+  }, [userId]);
 
-        const name = await getUserNameById(participantId);
-        namesMap[participantId] = name;
+  // Fetch last message for each conversation
+  const fetchLastMessages = useCallback(
+    async (convos: Conversation[]) => {
+      if (convos.length === 0) return;
+
+      const messagesMap: Record<string, Message> = {};
+
+      // For each conversation, fetch messages and get the last one
+      for (const convo of convos) {
+        try {
+          // Skip if we already have recent data for this conversation
+          if (
+            lastMessages[convo.id] &&
+            Date.now() - lastMessages[convo.id].timestamp < 30000
+          ) {
+            continue;
+          }
+
+          const result = await fetchMessagesFromFirebase(convo.id);
+          if (result.messages.length > 0) {
+            // Sort by timestamp and get the most recent
+            const sortedMessages = result.messages.sort(
+              (a, b) => b.timestamp - a.timestamp,
+            );
+            messagesMap[convo.id] = sortedMessages[0];
+          }
+        } catch (error) {
+          console.error(
+            `Error fetching last message for conversation ${convo.id}:`,
+            error,
+          );
+        }
       }
 
-      // Update state with new names
-      setUserNames(prev => ({...prev, ...namesMap}));
+      // Update state with new messages
+      setLastMessages(prev => ({...prev, ...messagesMap}));
     },
-    [userId, userNames],
+    [lastMessages],
   );
+
+  // Subscribe to message updates for all conversations
+  const setupMessageSubscriptions = useCallback((convos: Conversation[]) => {
+    const unsubscribes: (() => void)[] = [];
+
+    // Create a subscription for each conversation
+    convos.forEach(convo => {
+      const unsubscribe = subscribeToMessages(convo.id, messages => {
+        if (messages.length > 0) {
+          // Sort by timestamp and get the most recent
+          const sortedMessages = messages.sort(
+            (a, b) => b.timestamp - a.timestamp,
+          );
+          setLastMessages(prev => ({
+            ...prev,
+            [convo.id]: sortedMessages[0],
+          }));
+        }
+      });
+      unsubscribes.push(unsubscribe);
+    });
+
+    // Return function to unsubscribe from all
+    return () => {
+      unsubscribes.forEach(unsubscribe => unsubscribe());
+    };
+  }, []);
 
   // Get user ID and load conversations
   useEffect(() => {
@@ -79,22 +149,30 @@ export const Chats = (): React.JSX.Element => {
           setConversations(convos);
 
           // Fetch user names for participants
-          await fetchUserNames(convos);
+          await fetchUserNames();
+
+          // Fetch last message for each conversation
+          await fetchLastMessages(convos);
 
           // Set up user presence
           setupPresence(id);
 
-          // Subscribe to real-time updates
-          const unsubscribe = subscribeToConversations(
+          // Subscribe to real-time updates for conversations
+          const unsubscribeConversations = subscribeToConversations(
             id,
             async updatedConvos => {
               setConversations(updatedConvos);
-              await fetchUserNames(updatedConvos);
             },
           );
 
+          // Set up message subscriptions
+          const unsubscribeMessages = setupMessageSubscriptions(convos);
+
           // Cleanup subscription
-          return () => unsubscribe();
+          return () => {
+            unsubscribeConversations();
+            unsubscribeMessages();
+          };
         } catch (error) {
           console.error('Error fetching conversations:', error);
         } finally {
@@ -106,6 +184,8 @@ export const Chats = (): React.JSX.Element => {
     init();
   }, []);
 
+  console.log('convos', conversations);
+
   // Format the timestamp to a readable format
   const formatTime = (timestamp: number) => {
     return format(new Date(timestamp), 'h:mm a');
@@ -114,10 +194,13 @@ export const Chats = (): React.JSX.Element => {
   // Get other participant name for display (assuming we're in a 1:1 chat)
   const getOtherParticipant = (participants: string[]) => {
     const otherUserId = participants.find(id => id !== userId);
-    if (!otherUserId) return 'Unknown user';
+    if (!otherUserId) {
+      return 'Unknown user';
+    }
 
     // Return the name if we have it, otherwise the ID
     return userNames[otherUserId] || otherUserId;
+    // return userNames[otherUserId];
   };
 
   // Get the first letter of the participant's name for the avatar
@@ -140,6 +223,7 @@ export const Chats = (): React.JSX.Element => {
   const renderConversation = ({item}) => {
     const otherParticipant = getOtherParticipant(item.participants);
     const initial = getInitial(otherParticipant);
+    const lastMessage = lastMessages[item.id];
 
     return (
       <TouchableOpacity
@@ -152,28 +236,29 @@ export const Chats = (): React.JSX.Element => {
         <View style={styles.conversationDetails}>
           <View style={styles.headerRow}>
             <Text style={styles.participantName}>{otherParticipant}</Text>
-            {item.lastMessage && (
+            {lastMessage && (
               <Text style={styles.timestamp}>
-                {formatTime(item.lastMessage.timestamp)}
+                {formatTime(lastMessage.timestamp)}
               </Text>
             )}
           </View>
 
           <View style={styles.messageRow}>
-            {item.lastMessage ? (
+            {lastMessage ? (
               <Text
                 style={styles.lastMessage}
                 numberOfLines={1}
                 ellipsizeMode="tail">
-                {item.lastMessage.text}
+                {lastMessage.text}
               </Text>
             ) : (
               <Text style={styles.noMessages}>No messages yet</Text>
             )}
 
-            {item.unreadCount > 0 && (
+            {/* Calculate unread count - this would need additional logic */}
+            {false && (
               <View style={styles.unreadBadge}>
-                <Text style={styles.unreadCount}>{item.unreadCount}</Text>
+                <Text style={styles.unreadCount}>0</Text>
               </View>
             )}
           </View>
