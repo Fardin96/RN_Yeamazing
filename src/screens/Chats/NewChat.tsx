@@ -25,13 +25,18 @@ export const NewChat = (): React.JSX.Element => {
 
   // Redux state
   const currentUserId = useAppSelector(state => state.user.userId);
+  const userSlice = useAppSelector(state => state.user);
   const users = useAppSelector(state => state.chats.users);
   const loading = useAppSelector(state => state.chats.loading);
   const userStatuses = useAppSelector(state => state.chats.userStatuses);
 
+  console.log('+---------------------NEW-CHAT------------------+');
+  console.log('user slice: ', userSlice);
+
   // Fetch users when component mounts
   useEffect(() => {
     if (currentUserId) {
+      console.log('first');
       dispatch(fetchUsers(currentUserId)).catch(err => {
         setError('Failed to load users. Please try again.');
         console.error('Error in fetchUsers:', err);

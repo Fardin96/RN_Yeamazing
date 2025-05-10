@@ -16,10 +16,10 @@ import {
 } from '../../rtk/slices/chatSlice';
 import {setupPresence} from '../../utils/firebase/chatFirebase';
 import {format} from 'date-fns';
-import {NewChatNavigationProp} from '../../types/navigation';
+import {ChatStackScreenNavigationProp} from '../../types/navigation';
 
 export const Chats = (): React.JSX.Element => {
-  const navigation = useNavigation<NewChatNavigationProp>();
+  const navigation = useNavigation<ChatStackScreenNavigationProp>();
   const dispatch = useAppDispatch();
 
   // Get data from Redux store

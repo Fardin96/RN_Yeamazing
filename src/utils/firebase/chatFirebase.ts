@@ -11,13 +11,7 @@ import {
   orderBy,
   increment,
 } from '@react-native-firebase/firestore';
-import {
-  getDatabase,
-  ref,
-  onValue,
-  set,
-  onDisconnect,
-} from '@react-native-firebase/database';
+import database from '@react-native-firebase/database';
 import {Message, Conversation, UserStatus} from '../../types/chat';
 import {getDb} from './config';
 
@@ -40,9 +34,9 @@ export const fetchConversationsFromFirebase = async (
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Conversation, 'id'>),
+  return snapshot.docs.map(item => ({
+    id: item.id,
+    ...(item.data() as Omit<Conversation, 'id'>),
   }));
 };
 
@@ -61,9 +55,9 @@ export const subscribeToConversations = (
   );
 
   return onSnapshot(q, snapshot => {
-    const conversations = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Conversation, 'id'>),
+    const conversations = snapshot.docs.map(item => ({
+      id: item.id,
+      ...(item.data() as Omit<Conversation, 'id'>),
     }));
     callback(conversations);
   });
@@ -83,9 +77,9 @@ export const fetchMessagesFromFirebase = async (
   );
 
   const snapshot = await getDocs(q);
-  const messages = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Message, 'id'>),
+  const messages = snapshot.docs.map(item => ({
+    id: item.id,
+    ...(item.data() as Omit<Message, 'id'>),
   }));
 
   return {conversationId, messages};
@@ -106,9 +100,9 @@ export const subscribeToMessages = (
   );
 
   return onSnapshot(q, snapshot => {
-    const messages = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Message, 'id'>),
+    const messages = snapshot.docs.map(item => ({
+      id: item.id,
+      ...(item.data() as Omit<Message, 'id'>),
     }));
     callback(messages);
   });
@@ -169,9 +163,9 @@ export const updateReadStatusInFirebase = async (
   const messageIds: string[] = [];
 
   // Update each message's read status
-  const updatePromises = snapshot.docs.map(async doc => {
-    await updateDoc(doc.ref, {read: true});
-    messageIds.push(doc.id);
+  const updatePromises = snapshot.docs.map(async item => {
+    await updateDoc(item.ref, {read: true});
+    messageIds.push(item.id);
   });
 
   await Promise.all(updatePromises);
@@ -188,24 +182,26 @@ export const updateReadStatusInFirebase = async (
 /**
  * Set up user online presence
  */
-export const setupPresence = (userId: string): void => {
-  const rtdb = getDatabase();
-  const userStatusRef = ref(rtdb, `${USER_STATUS}/${userId}`);
+export const setupPresence = async (userId: string): Promise<void> => {
+  try {
+    // Get database reference
+    const db = database();
+    const userStatusRef = db.ref(`${USER_STATUS}/${userId}`);
 
-  // Set user as online
-  const isOnlineData = {
-    online: true,
-    lastSeen: Date.now(),
-  };
+    // Set the user as online
+    await userStatusRef.set({
+      online: true,
+      lastSeen: Date.now(),
+    });
 
-  // Set initial status
-  set(userStatusRef, isOnlineData);
-
-  // Set up disconnection handler
-  onDisconnect(userStatusRef).set({
-    online: false,
-    lastSeen: Date.now(),
-  });
+    // Set up disconnection handler
+    userStatusRef.onDisconnect().set({
+      online: false,
+      lastSeen: Date.now(),
+    });
+  } catch (error) {
+    console.error('Error setting up presence:', error);
+  }
 };
 
 /**
@@ -214,15 +210,20 @@ export const setupPresence = (userId: string): void => {
 export const updateUserStatusInFirebase = async (
   status: UserStatus,
 ): Promise<UserStatus> => {
-  const rtdb = getDatabase();
-  const userStatusRef = ref(rtdb, `${USER_STATUS}/${status.userId}`);
+  try {
+    const db = database();
+    const userStatusRef = db.ref(`${USER_STATUS}/${status.userId}`);
 
-  await set(userStatusRef, {
-    online: status.online,
-    lastSeen: status.lastSeen,
-  });
+    await userStatusRef.set({
+      online: status.online,
+      lastSeen: status.lastSeen,
+    });
 
-  return status;
+    return status;
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    throw error;
+  }
 };
 
 /**
@@ -232,19 +233,31 @@ export const subscribeToUserStatus = (
   userIds: string[],
   callback: (statuses: UserStatus[]) => void,
 ): (() => void) => {
-  const rtdb = getDatabase();
-  const statusRef = ref(rtdb, USER_STATUS);
+  try {
+    const db = database();
+    const statusRef = db.ref(USER_STATUS);
 
-  return onValue(statusRef, snapshot => {
-    const data = snapshot.val() || {};
-    const statuses: UserStatus[] = userIds.map(userId => ({
-      userId,
-      online: data[userId]?.online || false,
-      lastSeen: data[userId]?.lastSeen || 0,
-    }));
+    return statusRef.on(
+      'value',
+      snapshot => {
+        const data = snapshot.val() || {};
+        const statuses: UserStatus[] = userIds.map(userId => ({
+          userId,
+          online: data[userId]?.online || false,
+          lastSeen: data[userId]?.lastSeen || 0,
+        }));
 
-    callback(statuses);
-  });
+        callback(statuses);
+      },
+      error => {
+        console.error('Error in status subscription:', error);
+      },
+    );
+  } catch (error) {
+    console.error('Error setting up status subscription:', error);
+    // Return a no-op function as fallback
+    return () => {};
+  }
 };
 
 /**
@@ -281,18 +294,24 @@ export const fetchUsersFromFirebase = async (
     const usersCollection = collection(db, 'Users');
     const usersSnapshot = await getDocs(usersCollection);
 
-    // console.log(
-    //   '+-------------------FETCH_USERS_FROM_FIREBASE-------------------+',
-    // );
-    // console.log(typeof usersSnapshot.docs);
-    // console.log('usersSnapshot.docs: ', usersSnapshot.docs[0].id);
+    console.log(
+      '+-------------------FETCH_USERS_FROM_FIREBASE-------------------+',
+    );
+    console.log(
+      usersSnapshot.docs
+        .filter(item => item.data().userId !== currentUserId)
+        .map(item => ({
+          id: item.data().userId,
+          ...item.data(),
+        })),
+    );
 
     // Filter out the current user and map to a user object
     return usersSnapshot.docs
-      .filter(doc => doc.data().userId !== currentUserId)
-      .map(doc => ({
-        id: doc.data().userId,
-        ...doc.data(),
+      .filter(item => item.data().userId !== currentUserId)
+      .map(item => ({
+        id: item.data().userId,
+        ...item.data(),
       }));
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -317,8 +336,8 @@ export const findExistingConversation = async (
     const snapshot = await getDocs(q);
 
     // Check each conversation to see if the other user is a participant
-    const existingConversation = snapshot.docs.find(doc => {
-      const data = doc.data();
+    const existingConversation = snapshot.docs.find(item => {
+      const data = item.data();
       return data.participants.includes(userIds[1]);
     });
 

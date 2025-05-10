@@ -19,6 +19,14 @@ export type MainTabsParamList = {
   Profile: undefined;
 };
 
+export type ChatsStackParamList = {
+  ChatScreen: {conversationId: string};
+  NewChat: undefined;
+};
+
+export type ChatStackScreenNavigationProp =
+  StackNavigationProp<ChatsStackParamList>;
+
 // Navigation prop types for each screen
 export type SignInNavigationProp = StackNavigationProp<
   RootStackParamList,

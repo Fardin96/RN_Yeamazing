@@ -1,3 +1,4 @@
+import {collection, getDocs} from '@react-native-firebase/firestore';
 import {getDb} from '../firebase/config';
 
 export async function addUser(
@@ -9,16 +10,27 @@ export async function addUser(
 ): Promise<void> {
   try {
     const db = await getDb();
+    const usersCollection = collection(db, 'Users');
+    const usersSnapshot = await getDocs(usersCollection);
 
-    db.collection('Users').add({
-      userId,
-      authToken,
-      name,
-      email,
-      userPhotoUrl,
-    });
+    // Check if user already exists
+    const userExists = usersSnapshot.docs.some(
+      doc => doc.data().userId === userId,
+    );
 
-    // console.log('User added!');
+    // Only add user if they don't already exist
+    if (!userExists) {
+      db.collection('Users').add({
+        userId,
+        authToken,
+        name,
+        email,
+        userPhotoUrl,
+      });
+      console.log('New user added to database');
+    } else {
+      console.log('User already exists in database');
+    }
   } catch (error) {
     console.warn('Error adding user:', error);
   }

@@ -1,21 +1,30 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SignInNavigationProp} from '../../types/navigation';
 import Icon from 'react-native-vector-icons/AntDesign';
-import {useAppSelector} from '../../rtk/hooks';
+// import {useAppSelector} from '../../rtk/hooks';
 import {signOut} from '../../utils/functions/auth/authFunctions';
 import {AppHeaderProps} from '../../types/appHeader';
+import {getLocalData} from '../../utils/functions/cachingFunctions';
+import {USER_IMG} from '../../assets/constants';
 
 export const AppHeader = ({
   showLogout = true,
 }: AppHeaderProps): React.JSX.Element => {
+  const [photoUrl, setPhotoUrl] = useState('');
   const navigation = useNavigation<SignInNavigationProp>();
-  const user = useAppSelector(state => state.user);
 
   const handleProfilePress = () => {
     navigation.navigate('Profile');
   };
+
+  useEffect(() => {
+    (async () => {
+      const photo = await getLocalData(USER_IMG);
+      setPhotoUrl(photo);
+    })();
+  }, []);
 
   return (
     <View style={styles.header}>
@@ -34,7 +43,7 @@ export const AppHeader = ({
           style={styles.profileIcon}
           onPress={handleProfilePress}>
           <Image
-            source={{uri: user.photoUrl}}
+            source={{uri: photoUrl}}
             style={styles.profileIcon}
             resizeMode="contain"
           />

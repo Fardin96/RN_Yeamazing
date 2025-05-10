@@ -337,6 +337,9 @@ const chatSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
+        console.log('+--------------------CHAT-SLICE----------------+');
+        console.log(action.payload);
+
         state.loading = false;
         state.users = action.payload;
       })
