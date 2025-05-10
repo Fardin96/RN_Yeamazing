@@ -22,7 +22,7 @@ import {
 import {USER_ID} from '../../assets/constants';
 import {getLocalData} from '../../utils/functions/cachingFunctions';
 import {Conversation, Message} from '../../types/chat';
-import {collection, getDocs} from 'firebase/firestore';
+import {collection, getDocs} from '@react-native-firebase/firestore';
 import {getDb} from '../../utils/firebase/config';
 
 export const Chats = (): React.JSX.Element => {
@@ -37,8 +37,6 @@ export const Chats = (): React.JSX.Element => {
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
-
-  console.log('conversations', conversations);
 
   // Function to get all user names at once
   const fetchUserNames = useCallback(async () => {
@@ -71,7 +69,9 @@ export const Chats = (): React.JSX.Element => {
   // Fetch last message for each conversation
   const fetchLastMessages = useCallback(
     async (convos: Conversation[]) => {
-      if (convos.length === 0) return;
+      if (convos.length === 0) {
+        return;
+      }
 
       const messagesMap: Record<string, Message> = {};
 
@@ -205,7 +205,7 @@ export const Chats = (): React.JSX.Element => {
 
   // Get the first letter of the participant's name for the avatar
   const getInitial = (name: string) => {
-    return name.charAt(0).toUpperCase();
+    return name?.charAt(0).toUpperCase();
   };
 
   // Open a conversation when tapped
