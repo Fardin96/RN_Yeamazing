@@ -34,6 +34,7 @@ export const fetchConversationsFromFirebase = async (
   );
 
   const snapshot = await getDocs(q);
+
   return snapshot.docs.map(item => ({
     id: item.id,
     ...(item.data() as Omit<Conversation, 'id'>),
@@ -294,17 +295,17 @@ export const fetchUsersFromFirebase = async (
     const usersCollection = collection(db, 'Users');
     const usersSnapshot = await getDocs(usersCollection);
 
-    console.log(
-      '+-------------------FETCH_USERS_FROM_FIREBASE-------------------+',
-    );
-    console.log(
-      usersSnapshot.docs
-        .filter(item => item.data().userId !== currentUserId)
-        .map(item => ({
-          id: item.data().userId,
-          ...item.data(),
-        })),
-    );
+    // console.log(
+    //   '+-------------------FETCH_USERS_FROM_FIREBASE-------------------+',
+    // );
+    // console.log(
+    //   usersSnapshot.docs
+    //     .filter(item => item.data().userId !== currentUserId)
+    //     .map(item => ({
+    //       id: item.data().userId,
+    //       ...item.data(),
+    //     })),
+    // );
 
     // Filter out the current user and map to a user object
     return usersSnapshot.docs
@@ -345,5 +346,27 @@ export const findExistingConversation = async (
   } catch (error) {
     console.error('Error finding existing conversation:', error);
     throw error;
+  }
+};
+
+/**
+ * Fetch a user's name by their ID
+ */
+export const getUserNameById = async (userId: string): Promise<string> => {
+  try {
+    const db = getFirestore();
+    const usersCollection = collection(db, 'Users');
+    const q = query(usersCollection, where('userId', '==', userId));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      return 'Unknown User';
+    }
+
+    const userData = snapshot.docs[0].data();
+    return userData.name || 'Unknown User';
+  } catch (error) {
+    console.error('Error fetching user name:', error);
+    return 'Unknown User';
   }
 };

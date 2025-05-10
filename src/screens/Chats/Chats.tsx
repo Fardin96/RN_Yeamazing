@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -9,34 +9,102 @@ import {
 } from 'react-native';
 import {colors} from '../../assets/colors/colors';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch, useAppSelector} from '../../rtk/hooks';
-import {
-  fetchConversations,
-  setActiveConversation,
-} from '../../rtk/slices/chatSlice';
-import {setupPresence} from '../../utils/firebase/chatFirebase';
-import {format} from 'date-fns';
 import {ChatStackScreenNavigationProp} from '../../types/navigation';
+import {format} from 'date-fns';
+import {
+  fetchConversationsFromFirebase,
+  setupPresence,
+  subscribeToConversations,
+  getUserNameById,
+} from '../../utils/firebase/chatFirebase';
+import {USER_ID} from '../../assets/constants';
+import {getLocalData} from '../../utils/functions/cachingFunctions';
+import {Conversation} from '../../types/chat';
 
 export const Chats = (): React.JSX.Element => {
   const navigation = useNavigation<ChatStackScreenNavigationProp>();
-  const dispatch = useAppDispatch();
 
-  // Get data from Redux store
-  const userId = useAppSelector(state => state.user.userId);
-  const conversations = useAppSelector(state =>
-    Object.values(state.chats.conversations),
+  // Local state
+  const [userId, setUserId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(null);
+
+  // Function to get participant names
+  const fetchUserNames = useCallback(
+    async (convos: Conversation[]) => {
+      if (!userId) return;
+
+      const participantIds = new Set<string>();
+
+      // Collect all unique participant IDs
+      convos.forEach(convo => {
+        convo.participants.forEach(participantId => {
+          if (participantId !== userId) {
+            participantIds.add(participantId);
+          }
+        });
+      });
+
+      // Fetch names for all participants
+      const namesMap: Record<string, string> = {};
+      for (const participantId of participantIds) {
+        // Skip if we already have the name
+        if (userNames[participantId]) continue;
+
+        const name = await getUserNameById(participantId);
+        namesMap[participantId] = name;
+      }
+
+      // Update state with new names
+      setUserNames(prev => ({...prev, ...namesMap}));
+    },
+    [userId, userNames],
   );
-  const loading = useAppSelector(state => state.chats.loading);
-  // const userStatuses = useAppSelector(state => state.chats.userStatuses);
 
-  // Load conversations and set up presence
+  // Get user ID and load conversations
   useEffect(() => {
-    if (userId) {
-      dispatch(fetchConversations(userId));
-      setupPresence(userId);
-    }
-  }, [dispatch, userId]);
+    const init = async () => {
+      const id = await getLocalData(USER_ID);
+      setUserId(id);
+
+      if (id) {
+        setLoading(true);
+        try {
+          // Fetch initial conversations
+          const convos = await fetchConversationsFromFirebase(id);
+          setConversations(convos);
+
+          // Fetch user names for participants
+          await fetchUserNames(convos);
+
+          // Set up user presence
+          setupPresence(id);
+
+          // Subscribe to real-time updates
+          const unsubscribe = subscribeToConversations(
+            id,
+            async updatedConvos => {
+              setConversations(updatedConvos);
+              await fetchUserNames(updatedConvos);
+            },
+          );
+
+          // Cleanup subscription
+          return () => unsubscribe();
+        } catch (error) {
+          console.error('Error fetching conversations:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    init();
+  }, []);
 
   // Format the timestamp to a readable format
   const formatTime = (timestamp: number) => {
@@ -45,13 +113,21 @@ export const Chats = (): React.JSX.Element => {
 
   // Get other participant name for display (assuming we're in a 1:1 chat)
   const getOtherParticipant = (participants: string[]) => {
-    const otherUser = participants.find(id => id !== userId);
-    return otherUser || 'Unknown user';
+    const otherUserId = participants.find(id => id !== userId);
+    if (!otherUserId) return 'Unknown user';
+
+    // Return the name if we have it, otherwise the ID
+    return userNames[otherUserId] || otherUserId;
+  };
+
+  // Get the first letter of the participant's name for the avatar
+  const getInitial = (name: string) => {
+    return name.charAt(0).toUpperCase();
   };
 
   // Open a conversation when tapped
   const handleSelectConversation = (conversationId: string) => {
-    dispatch(setActiveConversation(conversationId));
+    setActiveConversationId(conversationId);
     navigation.navigate('ChatScreen', {conversationId});
   };
 
@@ -63,15 +139,14 @@ export const Chats = (): React.JSX.Element => {
   // Render a conversation list item
   const renderConversation = ({item}) => {
     const otherParticipant = getOtherParticipant(item.participants);
+    const initial = getInitial(otherParticipant);
 
     return (
       <TouchableOpacity
         style={styles.conversationItem}
         onPress={() => handleSelectConversation(item.id)}>
         <View style={styles.profileIcon}>
-          <Text style={styles.profileInitial}>
-            {otherParticipant.charAt(0).toUpperCase()}
-          </Text>
+          <Text style={styles.profileInitial}>{initial}</Text>
         </View>
 
         <View style={styles.conversationDetails}>

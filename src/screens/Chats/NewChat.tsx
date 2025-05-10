@@ -7,13 +7,16 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../assets/colors/colors';
 import {useAppDispatch, useAppSelector} from '../../rtk/hooks';
-import {fetchUsers, findOrCreateConversation} from '../../rtk/slices/chatSlice';
-import FastImage from 'react-native-fast-image'; // Install if not already
+import {findOrCreateConversation} from '../../rtk/slices/chatSlice';
 import {NewChatNavigationProp} from '../../types/navigation';
+import {USER_ID} from '../../assets/constants';
+import {getLocalData} from '../../utils/functions/cachingFunctions';
+import {fetchUsersFromFirebase} from '../../utils/firebase/chatFirebase';
 
 export const NewChat = (): React.JSX.Element => {
   const navigation = useNavigation<NewChatNavigationProp>();
@@ -22,26 +25,28 @@ export const NewChat = (): React.JSX.Element => {
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
 
   // Redux state
-  const currentUserId = useAppSelector(state => state.user.userId);
-  const userSlice = useAppSelector(state => state.user);
-  const users = useAppSelector(state => state.chats.users);
   const loading = useAppSelector(state => state.chats.loading);
   const userStatuses = useAppSelector(state => state.chats.userStatuses);
 
-  console.log('+---------------------NEW-CHAT------------------+');
-  console.log('user slice: ', userSlice);
+  useEffect(() => {
+    (async () => {
+      const id = await getLocalData(USER_ID);
+      setCurrentUserId(id);
+    })();
+  }, []);
 
   // Fetch users when component mounts
   useEffect(() => {
-    if (currentUserId) {
-      console.log('first');
-      dispatch(fetchUsers(currentUserId)).catch(err => {
-        setError('Failed to load users. Please try again.');
-        console.error('Error in fetchUsers:', err);
-      });
-    }
+    (async () => {
+      if (currentUserId) {
+        const allUsers = await fetchUsersFromFirebase(currentUserId.toString());
+        setUsers(allUsers);
+      }
+    })();
   }, [dispatch, currentUserId]);
 
   // Filter users based on search query
@@ -58,7 +63,7 @@ export const NewChat = (): React.JSX.Element => {
         // This will check if a conversation exists and create one if it doesn't
         const result = await dispatch(
           findOrCreateConversation({
-            currentUserId,
+            currentUserId: currentUserId.toString(),
             selectedUserId: userId,
           }),
         ).unwrap();
@@ -88,10 +93,7 @@ export const NewChat = (): React.JSX.Element => {
         onPress={() => handleSelectUser(item.id)}>
         <View style={styles.avatarContainer}>
           {item.photoUrl ? (
-            <FastImage
-              style={styles.userAvatar}
-              source={{uri: item.photoUrl}}
-            />
+            <Image style={styles.userAvatar} source={{uri: item.photoUrl}} />
           ) : (
             <View style={styles.userAvatar}>
               <Text style={styles.userInitial}>
