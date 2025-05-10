@@ -8,6 +8,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
   AddTravelLog: undefined;
+  NewChat: undefined;
   // Profile: undefined;
   // VideoPlayerScreen: {
   //   videoId: string;
@@ -15,6 +16,8 @@ export type RootStackParamList = {
   //   videoThumbnail: string;
   //   videoUrl: string;
   // };
+  ChatScreen: {conversationId: string};
+  NewChat: undefined;
 };
 
 // Bottom tab navigator params
@@ -55,4 +58,14 @@ export type HomeScreenNavigationProp = StackNavigationProp<
 export type AddTravelLogNavigationProp = StackNavigationProp<
   RootStackParamList,
   'AddTravelLog'
+>;
+
+export type ChatScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'ChatScreen'
+>;
+
+export type NewChatNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'NewChat'
 >;

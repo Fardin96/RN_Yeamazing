@@ -8,7 +8,8 @@ import {AddTravelLog} from '../screens/TravelLogs/AddTravelLog';
 import {NavigationContainer} from '@react-navigation/native';
 import {isAuthenticated} from '../utils/functions/auth/authFunctions';
 import {Fallback, Header} from '../components/CommonRenders';
-
+import {ChatScreen} from '../screens/Chats/ChatScreen';
+import {NewChat} from '../screens/Chats/NewChat';
 const Stack = createStackNavigator<RootStackParamList>();
 
 export function StackNavigation() {
@@ -62,6 +63,28 @@ export function StackNavigation() {
           component={AddTravelLog}
           options={{
             headerTitle: 'Add Travel Log',
+            headerStyle: {
+              backgroundColor: '#333',
+            },
+            headerTintColor: 'white',
+          }}
+        />
+        <Stack.Screen
+          name="ChatScreen"
+          component={ChatScreen}
+          options={{
+            headerTitle: '',
+            headerStyle: {
+              backgroundColor: '#333',
+            },
+            headerTintColor: 'white',
+          }}
+        />
+        <Stack.Screen
+          name="NewChat"
+          component={NewChat}
+          options={{
+            headerTitle: 'New Chat',
             headerStyle: {
               backgroundColor: '#333',
             },
