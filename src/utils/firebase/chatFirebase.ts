@@ -10,9 +10,16 @@ import {
   onSnapshot,
   orderBy,
   increment,
-} from 'firebase/firestore';
-import {getDatabase, ref, onValue, set, onDisconnect} from 'firebase/database';
+} from '@react-native-firebase/firestore';
+import {
+  getDatabase,
+  ref,
+  onValue,
+  set,
+  onDisconnect,
+} from '@react-native-firebase/database';
 import {Message, Conversation, UserStatus} from '../../types/chat';
+import {getDb} from './config';
 
 // Collection names
 const CONVERSATIONS = 'conversations';
@@ -270,15 +277,21 @@ export const fetchUsersFromFirebase = async (
   currentUserId: string,
 ): Promise<any[]> => {
   try {
-    const db = getFirestore();
+    const db = await getDb();
     const usersCollection = collection(db, 'Users');
     const usersSnapshot = await getDocs(usersCollection);
 
+    // console.log(
+    //   '+-------------------FETCH_USERS_FROM_FIREBASE-------------------+',
+    // );
+    // console.log(typeof usersSnapshot.docs);
+    // console.log('usersSnapshot.docs: ', usersSnapshot.docs[0].id);
+
     // Filter out the current user and map to a user object
     return usersSnapshot.docs
-      .filter(doc => doc.id !== currentUserId)
+      .filter(doc => doc.data().userId !== currentUserId)
       .map(doc => ({
-        id: doc.id,
+        id: doc.data().userId,
         ...doc.data(),
       }));
   } catch (error) {

@@ -13,7 +13,7 @@ function SignIn(): React.JSX.Element {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(state => state.user.isAuthenticated); // only available after login for now; TODO: use this everywhere
 
-  console.log('isAuthenticated', isAuthenticated);
+  // console.log('isAuthenticated', isAuthenticated);
 
   // Initialize Google Sign-In
   useEffect(() => {

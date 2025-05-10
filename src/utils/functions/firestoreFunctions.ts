@@ -18,7 +18,7 @@ export async function addUser(
       userPhotoUrl,
     });
 
-    console.log('User added!');
+    // console.log('User added!');
   } catch (error) {
     console.warn('Error adding user:', error);
   }

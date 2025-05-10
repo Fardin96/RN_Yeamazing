@@ -10,6 +10,7 @@ import {isAuthenticated} from '../utils/functions/auth/authFunctions';
 import {Fallback, Header} from '../components/CommonRenders';
 import {ChatScreen} from '../screens/Chats/ChatScreen';
 import {NewChat} from '../screens/Chats/NewChat';
+import {fetchUsersFromFirebase} from '../utils/firebase/chatFirebase';
 const Stack = createStackNavigator<RootStackParamList>();
 
 export function StackNavigation() {
@@ -19,6 +20,7 @@ export function StackNavigation() {
     const checkAuth = async () => {
       try {
         const authStatus = await isAuthenticated();
+        await fetchUsersFromFirebase('103208657539512899861');
         setIsAuth(authStatus);
       } catch (error) {
         console.error('Auth check failed:', error);

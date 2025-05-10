@@ -7,25 +7,16 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {colors} from '../../assets/colors/colors';
 import {useAppDispatch, useAppSelector} from '../../rtk/hooks';
 import {fetchUsers, findOrCreateConversation} from '../../rtk/slices/chatSlice';
 import FastImage from 'react-native-fast-image'; // Install if not already
-
-// In a real app, you would fetch this from Firestore
-// This is just a simplified example
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  photoUrl?: string;
-}
+import {NewChatNavigationProp} from '../../types/navigation';
 
 export const NewChat = (): React.JSX.Element => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NewChatNavigationProp>();
   const dispatch = useAppDispatch();
 
   // Local state
@@ -82,6 +73,10 @@ export const NewChat = (): React.JSX.Element => {
   const renderUserItem = ({item}) => {
     const isOnline = userStatuses[item.id]?.online || false;
 
+    const activeStatus = isOnline
+      ? {backgroundColor: '#4CAF50'}
+      : {backgroundColor: '#757575'};
+
     return (
       <TouchableOpacity
         style={styles.userItem}
@@ -99,12 +94,7 @@ export const NewChat = (): React.JSX.Element => {
               </Text>
             </View>
           )}
-          <View
-            style={[
-              styles.statusIndicator,
-              {backgroundColor: isOnline ? '#4CAF50' : '#757575'},
-            ]}
-          />
+          <View style={[styles.statusIndicator, activeStatus]} />
         </View>
 
         <View style={styles.userInfo}>

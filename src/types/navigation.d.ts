@@ -9,15 +9,7 @@ export type RootStackParamList = {
   Profile: undefined;
   AddTravelLog: undefined;
   NewChat: undefined;
-  // Profile: undefined;
-  // VideoPlayerScreen: {
-  //   videoId: string;
-  //   videoTitle: string;
-  //   videoThumbnail: string;
-  //   videoUrl: string;
-  // };
   ChatScreen: {conversationId: string};
-  NewChat: undefined;
 };
 
 // Bottom tab navigator params
