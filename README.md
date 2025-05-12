@@ -63,7 +63,7 @@ Due to firebase's widely documentation, support and ease of use, it was chosen a
 
 ### Travel Logs
 
-- Add a travel log using text input, camera, date picker and location(manual inptu)
+- Add a travel log using text input, camera, date picker and location(manual input)
 - View all travel logs in a list feed
 - Backup travel logs to firebase
 
