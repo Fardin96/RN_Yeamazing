@@ -40,8 +40,9 @@ export const AppHeader = ({
         )}
 
         <TouchableOpacity
+          disabled={true}
           style={styles.profileIcon}
-          onPress={handleProfilePress}>
+          onPress={() => {}}>
           <Image
             source={{uri: photoUrl}}
             style={styles.profileIcon}
