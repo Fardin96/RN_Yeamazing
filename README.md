@@ -76,4 +76,4 @@ Due to firebase's widely documentation, support and ease of use, it was chosen a
 
 ## Notes on improvements
 
-Due to spending a lot of time on the firebase integration, the UI and finishing of the entire app was not to my satisfaction. Some state management and the UI can be improved. Along with some minor improvements, the app can be made more robust and user friendly.
+Due to spending a lot of time on the firebase integration(due to the ongoing migration as we speak), the UI and finishing of the entire app was not to my satisfaction. Some state management and specially the navigation state management was not to my satisfaction. Moreover, the react-native-maps-autocomplete library isn't working as expected. Along with some minor improvements, the app can be made more robust and user friendly.
